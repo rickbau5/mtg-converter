@@ -1,87 +1,119 @@
-document.getElementById("convertToCSV").addEventListener("click", function() {
-    const manaBoxInput = document.getElementById("manaBoxInput").value;
-    // Implement the conversion logic from Mana Box to CSV here
-    const csvOutput = convertManaBoxToCSV(manaBoxInput);
-    updateOutput("csv", csvOutput);
+window.addEventListener('load', function() {
+    const deck = decodeDeckFromURL();
+    if (deck && deck.deckData) {
+        document.getElementById("input").value = deck.deckData;
+        setSelectedFormat(deck.format);
+    }
 });
 
-document.getElementById("convertToManaBox").addEventListener("click", function() {
-    const csvInput = document.getElementById("csvInput").value;
-    // Implement the conversion logic from CSV to Mana Box here
-    const manaBoxOutput = convertCSVToManaBox(csvInput);
-    updateOutput("manabox", manaBoxOutput);
+document.getElementById("convert").addEventListener("click", function() {
+    const input = document.getElementById("input").value;
+    const inputFormat = getSelectedFormat();
+    switch (inputFormat) {
+    case "csv":
+        const manaBoxOutput = convertCSVToManaBox(input);
+        updateOutput("manabox", manaBoxOutput);
+        break;
+    case "manabox":
+        const csvOutput = convertManaBoxToCSV(input);
+        updateOutput("csv", csvOutput);
+        break;
+    default:
+        alert("Invalid input format");
+        break;
+    }
+});
+
+document.getElementById("copyDeck").addEventListener("click", function() {
+    const deckData = document.getElementById("output").value;
+    copyToClipboard(deckData);
 });
 
 document.getElementById("shareDeck").addEventListener("click", function() {
     const deckData = document.getElementById("output").value;
     const outputFormat = document.getElementById("outputFormat").value;
-    console.log("outputFormat:", outputFormat)
-    console.log("deckData:", deckData)
     const u = encodeAndShareDeck(outputFormat, deckData);
     // copy to clipboard
+    copyToClipboard(u);
+    alert("Copied link to clipboard!");
+});
+
+document.getElementById('fileInput').addEventListener('change', function(event) {
+    handleFileSelect(event.target.files[0]);
+});
+
+document.getElementsByName("inputFormat").forEach(input => {
+    input.addEventListener("change", function() {
+        document.getElementById("convert").disabled = false;
+    });
+})
+
+function copyToClipboard(data) {
     if (navigator.clipboard) {
-        navigator.clipboard.writeText(u);
+        navigator.clipboard.writeText(data);
     } else {
         const el = document.createElement('textarea');
-        el.value = u;
+        el.value = data;
         document.body.appendChild(el);
-        console.log(u)
         el.select();
         document.execCommand('copy');
-        // document.body.removeChild(el);
+        document.body.removeChild(el);
     }
-    alert("Copied to clipboard!");
-});
-
-document.getElementById('manaBoxFileInput').addEventListener('change', function(event) {
-    handleFileSelect("manabox", event.target.files[0]);
-});
-
-document.getElementById('csvFileInput').addEventListener('change', function(event) {
-    handleFileSelect("csv", event.target.files[0]);
-});
-
-function handleFileSelect(format, file) {
-    const reader = new FileReader();
-    reader.onload = function(event) {
-        if (format == "manabox") {
-            document.getElementById("manaBoxInput").value = event.target.result;
-        } 
-        if (format == "csv") {
-            document.getElementById("csvInput").value = event.target.result;
-        }
-    };
-    reader.readAsText(file);
 }
 
-window.onload = function() {
-    const format = decodeDeckFromURL();
-    updateShare(format);
+function getSelectedFormat() {
+    const format = Array.from(document.getElementsByName("inputFormat")).filter(input => input.checked);
+    if (!!format) {
+        return format[0].value;
+    }
+    
+    return null;
+}
+
+function setSelectedFormat(format) {
+    const input = Array.from(document.getElementsByName("inputFormat")).filter(input => input.value === format);
+    console.log(input)
+    if (!!input) {
+        input[0].checked = true;
+        document.getElementById("convert").disabled = false;
+    }
+}
+
+function handleFileSelect(file) {
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        console.log("File loaded")
+        document.getElementById("input").value = event.target.result;
+    };
+    reader.readAsText(file);
 }
 
 function updateOutput(format, output) {
     document.getElementById("output").value = output;
     document.getElementById("outputFormat").value = format;
-    updateShare(format)
+    updateShareAndCopy(format)
 }
 
-function updateShare(format) {
-    const button = document.getElementById("shareDeck");
+function updateShareAndCopy(format) {
+    const share = document.getElementById("shareDeck");
+    const copy = document.getElementById("copyDeck");
     const deckData = document.getElementById("output").value;
     if (!deckData) {
-        button.href = "";
-        button.disabled = true;
+        share.href = "";
+        share.disabled = true;
+        copy.disabled = true;
         return;
     }
 
-    button.href = encodeAndShareDeck(format, deckData);
-    button.disabled = false;
+    share.href = encodeAndShareDeck(format, deckData);
+    share.disabled = false;
+    copy.disabled = false;
 }
 
 // Implement the conversion functions (convertManaBoxToCSV and convertCSVToManaBox) here
 function convertManaBoxToCSV(manaBoxInput) {
     const lines = manaBoxInput.split('\n');
-    const csvOutput = lines.filter(line => !!line)
+    const csvOutput = lines.filter(line => !!line && line.split(' ').length > 1)
         .map(line => {
             const [count, ...name] = line.trim().split(' ');
             return `${count},"${name.join(" ")}",,`;
@@ -125,7 +157,7 @@ function encodeAndShareDeck(format, deckData) {
     const encodedData = encodeURIComponent(deckData);
     const queryparams = new URLSearchParams(window.location.search);
     queryparams.set("format", format);
-    queryparams.set("deck", format);
+    queryparams.set("deck", encodedData);
     const url = `${window.location.href}?${queryparams.toString()}`;
     return url;
 }
@@ -135,15 +167,8 @@ function decodeDeckFromURL() {
     const queryParams = new URLSearchParams(window.location.search);
     const format = queryParams.get("format");
     const deckData = queryParams.get("deck");
-    if (deckData) {
-        // Handle the decoded deck data and populate the input fields
-        if (format == "manabox") {
-            document.getElementById("manaBoxInput").value = deckData;
-        }
-        if (format == "csv") {
-            document.getElementById("csvInput").value = deckData;
-        }
-    }
 
-    return format;
+    return !!format && !!deckData 
+        ? { format: decodeURIComponent(format), deckData: decodeURIComponent(deckData) } 
+        : null;
 }
