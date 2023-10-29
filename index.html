@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MTG Card Format Converter</title>
+</head>
+<body>
+    <h1>MTG Card Format Converter</h1>
+
+    <h2>Mana Box to CSV</h2>
+    <textarea id="manaBoxInput" rows="10" cols="50"></textarea>
+    <input type="file" id="manaBoxFileInput">
+
+    <button id="convertToCSV">Convert to CSV</button>
+
+    <h2>CSV to Mana Box</h2>
+    <textarea id="csvInput" rows="10" cols="50"></textarea>
+    <input type="file" id="csvFileInput">
+
+    <button id="convertToManaBox">Convert to Mana Box</button>
+
+    <h2>Converted Output</h2>
+    <button id="shareDeck" disabled>Share</button>
+    <textarea id="output" rows="10" cols="50"></textarea>
+    <input id="outputFormat" type="hidden" value="">
+
+    <script src="script.js"></script>
+</body>
+</html>
