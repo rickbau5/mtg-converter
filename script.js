@@ -123,7 +123,10 @@ function convertCSVToManaBox(csvInput) {
 // Encode the deck data and set it as the URL parameter
 function encodeAndShareDeck(format, deckData) {
     const encodedData = encodeURIComponent(deckData);
-    const url = `${window.location.toString().split("?")[0]}?format=${format}&deck=${encodedData}`;
+    const queryparams = new URLSearchParams(window.location.search);
+    queryparams.set("format", format);
+    queryparams.set("deck", format);
+    const url = `${window.location.href}?${queryparams.toString()}`;
     return url;
 }
 
