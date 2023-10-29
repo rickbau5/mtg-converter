@@ -15,9 +15,21 @@ document.getElementById("convertToManaBox").addEventListener("click", function()
 document.getElementById("shareDeck").addEventListener("click", function() {
     const deckData = document.getElementById("output").value;
     const outputFormat = document.getElementById("outputFormat").value;
+    console.log("outputFormat:", outputFormat)
+    console.log("deckData:", deckData)
     const u = encodeAndShareDeck(outputFormat, deckData);
     // copy to clipboard
-    navigator.clipboard.writeText(u);
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(u);
+    } else {
+        const el = document.createElement('textarea');
+        el.value = u;
+        document.body.appendChild(el);
+        console.log(u)
+        el.select();
+        document.execCommand('copy');
+        // document.body.removeChild(el);
+    }
     alert("Copied to clipboard!");
 });
 
@@ -111,7 +123,7 @@ function convertCSVToManaBox(csvInput) {
 // Encode the deck data and set it as the URL parameter
 function encodeAndShareDeck(format, deckData) {
     const encodedData = encodeURIComponent(deckData);
-    const url = `${window.location.toString()}?format=${format}&deck=${encodedData}`;
+    const url = `${window.location.toString().split("?")[0]}?format=${format}&deck=${encodedData}`;
     return url;
 }
 
